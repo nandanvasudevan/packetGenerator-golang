@@ -165,18 +165,8 @@ func arpGetDestMac(handle *pcap.Handle, hardwareAddr net.HardwareAddr, ip net.IP
 	}
 }
 
-func main() {
-	devices, err := pcap.FindAllDevs()
-	var deviceName string = ""
-	const ifName string = "Wi-Fi"
-	var localHwAddr string = ""
-	var localHwAddrBytes net.HardwareAddr
-	var localIp net.IP
-	// payload := []byte("Hello from GO!")
-
-	if err != nil {
-		errorLogger.Fatal(err)
-	}
+func getLocalHwAddr(ifName string) net.HardwareAddr {
+	localHwAddr := defaultMac()
 
 	netIfs, err := net.Interfaces()
 	if err != nil {
@@ -185,10 +175,18 @@ func main() {
 
 	for _, netIf := range netIfs {
 		if ifName == netIf.Name {
-			localHwAddrBytes = netIf.HardwareAddr
-			localHwAddr = localHwAddrBytes.String()
-			infoLogger.Printf("MAC for %s: %s\n\n", ifName, localHwAddr)
+			localHwAddr = netIf.HardwareAddr
+			infoLogger.Printf("MAC for %s: %s\n\n", ifName, localHwAddr.String())
 		}
+	}
+
+	return localHwAddr
+}
+
+func getLocalIp() (deviceName string, localIp net.IP) {
+	devices, err := pcap.FindAllDevs()
+	if err != nil {
+		errorLogger.Fatal("NPCAP not found! Please install it.")
 	}
 
 	infoLogger.Println("Device count: ", len(devices))
@@ -202,6 +200,16 @@ func main() {
 			localIp = device.Addresses[0].IP
 		}
 	}
+
+	return deviceName, localIp
+}
+
+func main() {
+	const ifName string = "Wi-Fi"
+	var localHwAddrBytes net.HardwareAddr
+
+	deviceName, localIp := getLocalIp()
+	localHwAddrBytes = getLocalHwAddr(ifName)
 
 	handle, err := pcap.OpenLive(deviceName, 1024, true, pcap.BlockForever)
 	if err != nil {
