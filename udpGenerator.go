@@ -109,9 +109,6 @@ func sendPacket(handle *pcap.Handle, layers ...gopacket.SerializableLayer) error
 func arpGetDestMac(handle *pcap.Handle, hardwareAddr net.HardwareAddr, ip net.IP, destIp net.IP) net.HardwareAddr {
 	infoLogger.Println("ARP request to get HW Addr for", destIp.String())
 
-	infoLogger.Println("Prot address size: ", uint8(len(defaultIP().To4())))
-	infoLogger.Println("HW address size: ", uint8(len(defaultMac())))
-
 	eth := &layers.Ethernet{
 		SrcMAC:       hardwareAddr,
 		DstMAC:       defaultMac(),
