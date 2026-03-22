@@ -98,12 +98,12 @@ func sendPacket(handle *pcap.Handle, layers ...gopacket.SerializableLayer) error
 	err := gopacket.SerializeLayers(buffer, opts, layers...)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("sendPacket() Serialization failed. Error: %w", err)
 	}
 
 	err = handle.WritePacketData(buffer.Bytes())
 	if err != nil {
-		return err
+		return fmt.Errorf("sendPacket() WritePacketData failed. Error: %w", err)
 	}
 
 	return nil
@@ -155,7 +155,7 @@ func arpGetDestMac(handle *pcap.Handle, hardwareAddr net.HardwareAddr, ip net.IP
 	err = sendPacket(handle, eth, arp)
 
 	if err != nil {
-		return defaultMac(), fmt.Errorf("No interfaces found! Error: %w", err)
+		return defaultMac(), fmt.Errorf("arpGetDestMac() No interfaces found! Error: %w", err)
 	}
 
 	select {
@@ -163,14 +163,14 @@ func arpGetDestMac(handle *pcap.Handle, hardwareAddr net.HardwareAddr, ip net.IP
 		infoLogger.Printf("Resolved MAC for %s: %s\n", destIp.String(), resolvedMac.String())
 		return resolvedMac, nil
 	case <-time.After(2 * time.Second):
-		return defaultMac(), fmt.Errorf("ARP request timeout!")
+		return defaultMac(), fmt.Errorf("arpGetDestMac() ARP request timeout!")
 	}
 }
 
 func getLocalHwAddr(ifName string) (localHwAddr net.HardwareAddr, err error) {
 	netIfs, err := net.Interfaces()
 	if err != nil {
-		return defaultMac(), fmt.Errorf("No interfaces found! Error: %w", err)
+		return defaultMac(), fmt.Errorf("getLocalHwAddr() No interfaces found! Error: %w", err)
 	}
 
 	for _, netIf := range netIfs {
@@ -186,7 +186,7 @@ func getLocalHwAddr(ifName string) (localHwAddr net.HardwareAddr, err error) {
 func getLocalIp() (deviceName string, localIp net.IP, err error) {
 	devices, err := pcap.FindAllDevs()
 	if err != nil {
-		return "", defaultIP(), fmt.Errorf("NPCAP not found! Please install it. Error: %w", err)
+		return "", defaultIP(), fmt.Errorf("getLocalIp() NPCAP not found! Please install it. Error: %w", err)
 	}
 
 	infoLogger.Println("Device count: ", len(devices))
@@ -204,24 +204,26 @@ func getLocalIp() (deviceName string, localIp net.IP, err error) {
 	return deviceName, localIp, nil
 }
 
-func main() {
+func run() (err error) {
+	
 	const ifName string = "Wi-Fi"
 	var localHwAddrBytes net.HardwareAddr
 
 	deviceName, localIp, err := getLocalIp()
 	if err != nil {
-		errorLogger.Fatal("IP lookup failed:", err)
+		return fmt.Errorf("run() IP lookup failed. Error: %w", err)
 	}
 
 	localHwAddrBytes, err = getLocalHwAddr(ifName)
 	if err != nil {
-		errorLogger.Fatal("MAC lookup failed:", err)
+		return fmt.Errorf("run() MAC lookup failed. Error: %w", err)
 	}
 
 	handle, err := pcap.OpenLive(deviceName, 1024, true, pcap.BlockForever)
 	if err != nil {
-		errorLogger.Fatal(err)
+		return err
 	}
+	defer handle.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -238,12 +240,20 @@ func main() {
 	destIp := net.IPv4(192, 168, 1, 1)
 	destHwAddr, err := arpGetDestMac(handle, localHwAddrBytes, localIp, destIp)
 	if err != nil {
-		errorLogger.Fatal("Could not locate MAC for", destIp)
+		return fmt.Errorf("run() Could not locate MAC for %s", destIp)
 	}
 
 	udpGenerator(ctx, handle, localIp, localHwAddrBytes, destIp, destHwAddr)
 
 	infoLogger.Println("Generator done.")
 
-	defer handle.Close()
+	return nil
+}
+
+func main() {
+	err := run()
+
+	if err != nil {
+		errorLogger.Fatal(err)
+	}
 }
