@@ -169,8 +169,8 @@ func main() {
 	devices, err := pcap.FindAllDevs()
 	var deviceName string = ""
 	const ifName string = "Wi-Fi"
-	var deviceMac string = ""
-	var deviceMacBytes net.HardwareAddr
+	var localHwAddr string = ""
+	var localHwAddrBytes net.HardwareAddr
 	var localIp net.IP
 	// payload := []byte("Hello from GO!")
 
@@ -185,9 +185,9 @@ func main() {
 
 	for _, netIf := range netIfs {
 		if ifName == netIf.Name {
-			deviceMacBytes = netIf.HardwareAddr
-			deviceMac = deviceMacBytes.String()
-			infoLogger.Printf("MAC for %s: %s\n\n", ifName, deviceMac)
+			localHwAddrBytes = netIf.HardwareAddr
+			localHwAddr = localHwAddrBytes.String()
+			infoLogger.Printf("MAC for %s: %s\n\n", ifName, localHwAddr)
 		}
 	}
 
@@ -221,8 +221,8 @@ func main() {
     }()
 
 	destIp := net.IPv4(192, 168, 1, 1)
-	destHwAddr := arpGetDestMac(handle, deviceMacBytes, localIp, destIp)
-	udpGenerator(ctx, handle, localIp, deviceMacBytes, destIp, destHwAddr)
+	destHwAddr := arpGetDestMac(handle, localHwAddrBytes, localIp, destIp)
+	udpGenerator(ctx, handle, localIp, localHwAddrBytes, destIp, destHwAddr)
 
 	infoLogger.Println("Generator done.")
 
