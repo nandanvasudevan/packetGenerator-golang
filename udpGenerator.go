@@ -208,33 +208,6 @@ func main() {
 		errorLogger.Fatal(err)
 	}
 
-	// eth := &layers.Ethernet{
-	// 	SrcMAC: deviceMacBytes,
-	// 	DstMAC: defaultMac(),
-	// 	EthernetType: layers.EthernetTypeIPv4,
-	// }
-
-	// ip := &layers.IPv4 {
-	// 	Version: 4,
-	// 	TTL: 64,
-	// 	SrcIP: localIp,
-	// 	DstIP: defaultIP(),
-	// 	Protocol: layers.IPProtocolUDP,
-	// }
-
-	// udp := &layers.UDP {
-	// SrcPort: layers.UDPPort(12345),
-	// DstPort: layers.UDPPort(9999),
-	// }
-	// // CRITICAL: UDP checksums require the IP header info
-	// udp.SetNetworkLayerForChecksum(ip)
-
-	// sendPacket(handle,
-	// 	eth,
-	// 	ip,
-	// 	udp,
-	// 	gopacket.Payload(payload))
-
 	ctx, cancel := context.WithTimeout(context.Background(), 30 * time.Second)
 	defer cancel()
 
