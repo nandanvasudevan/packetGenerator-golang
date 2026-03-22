@@ -2,8 +2,9 @@
 Attempting to create a RAW packet generator using PCAP library (Windows for now, so NPCAP).
 
 # Dependencies
-1. [Go toolchain setup](https://go.dev/doc/install)
-2. Uses CGO, so a compiler like GCC is required. Look [HERE](https://sajidifti.medium.com/how-to-install-gcc-and-gdb-on-windows-using-msys2-tutorial-0fceb7e66454) if you need help.
+1. [Go toolchain setup](https://go.dev/doc/install).
+2. Uses [NPCAP](https://npcap.com/#download), make sure it is already installed.
+3. Uses CGO, so a compiler like GCC is required. Look [HERE](https://sajidifti.medium.com/how-to-install-gcc-and-gdb-on-windows-using-msys2-tutorial-0fceb7e66454) if you need help.
 
 # How to run
 `go run .\udpGenerator.go`
