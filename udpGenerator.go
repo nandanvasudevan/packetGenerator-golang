@@ -43,6 +43,8 @@ func IPv4() net.IP {
 func udpGenerator(ctx context.Context, handle *pcap.Handle, localIp net.IP, localHwAddr net.HardwareAddr, destIp net.IP, destHwAddr net.HardwareAddr) {
 	infoLogger.Printf("Starting UDP generator to %s\n", destIp.String())
 
+	var packetCount uint64 = 0
+
 	payload := []byte("Hello from GO!")
 
 	eth := &layers.Ethernet{
@@ -72,10 +74,11 @@ func udpGenerator(ctx context.Context, handle *pcap.Handle, localIp net.IP, loca
 	for {
 		select {
 		case <-ctx.Done():
+			infoLogger.Printf("Generated %d packets\n", packetCount)
 			infoLogger.Println("Shutting down generator...")
 			return
 		case <-ticker.C:
-
+			packetCount++
 			sendPacket(handle,
 				eth,
 				ip,
@@ -208,17 +211,17 @@ func main() {
 		errorLogger.Fatal(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	// 3. Handle Ctrl+C
-    sigChan := make(chan os.Signal, 1)
-    signal.Notify(sigChan, os.Interrupt)
-    go func() {
-        <-sigChan
-        infoLogger.Println("[Ctrl+C] Received, shutting down...")
-        cancel() // Manually trigger the context cancellation
-    }()
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt)
+	go func() {
+		<-sigChan
+		infoLogger.Println("[Ctrl+C] Received, shutting down...")
+		cancel() // Manually trigger the context cancellation
+	}()
 
 	destIp := net.IPv4(192, 168, 1, 1)
 	destHwAddr := arpGetDestMac(handle, localHwAddrBytes, localIp, destIp)
