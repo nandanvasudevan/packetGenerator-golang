@@ -10,6 +10,7 @@ import "C"
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -45,8 +46,6 @@ func udpGenerator(ctx context.Context, handle *pcap.Handle, localIp net.IP, loca
 
 	var packetCount uint64 = 0
 
-	payload := []byte("Hello from GO!")
-
 	eth := &layers.Ethernet{
 		SrcMAC:       localHwAddr,
 		DstMAC:       destHwAddr,
@@ -78,6 +77,7 @@ func udpGenerator(ctx context.Context, handle *pcap.Handle, localIp net.IP, loca
 			infoLogger.Println("Shutting down generator...")
 			return
 		case <-ticker.C:
+			payload := []byte(fmt.Sprintf("GEN_PKT_%d", packetCount))
 			packetCount++
 			sendPacket(handle,
 				eth,
